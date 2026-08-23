@@ -1,0 +1,14 @@
+{
+  "name": "business-cost-calculator",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "node scripts/server.js",
+    "build": "node scripts/build.js",
+    "preview": "node scripts/server.js dist",
+    "test": "node --test src/*.test.js"
+  },
+  "dependencies": {},
+  "devDependencies": {}
+}
