@@ -1,8 +1,10 @@
 # Business Cost Calculator
 
-A mobile-first, browser-based calculator for any small business or product. Add material, packaging, and other costs; calculate cost per unit; compare suggested selling prices; and see profit, margin, potential revenue, and potential profit instantly.
+A mobile-first, browser-based calculator for any small business or product. Add batch-total or per-unit costs; calculate cost per unit; compare markup-based selling-price suggestions; and see profit, margin, potential revenue, and potential profit instantly.
 
 All calculations run locally in the browser. The application has no authentication, database, or external API.
+
+Products are saved only in the current browser. Use **Export Backup** to move or protect data, and **Import Backup** to restore it on another device.
 
 ## Install
 

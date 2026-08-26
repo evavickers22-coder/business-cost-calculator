@@ -24,4 +24,24 @@ test('handles zero, empty, negative, and invalid inputs safely', () => {
 
 test('returns the requested selling-price suggestions', () => {
   assert.deepEqual(priceSuggestions(10000).map(({ value }) => value), [13000, 15000, 20000, 30000])
+  assert.deepEqual(priceSuggestions(10000).map(({ label }) => label), ['30% markup', '50% markup', '100% markup', 'Cost × 3'])
+})
+
+test('combines batch-total and per-unit costs correctly', () => {
+  const result = calculateSummary({
+    materialCosts: [{ cost: 100, costMode: 'batch' }],
+    packagingCosts: [{ cost: 2, costMode: 'perUnit' }],
+    otherCosts: [{ cost: 1, costMode: 'perUnit' }],
+    units: 10,
+    sellingPrice: 20,
+  })
+  assert.equal(result.totalCost, 130)
+  assert.equal(result.costPerUnit, 13)
+  assert.equal(result.totalProfit, 70)
+})
+
+test('treats missing and unknown cost modes as batch totals for backward compatibility', () => {
+  const result = calculateSummary({ materialCosts: [{ cost: 25 }, { cost: 10, costMode: 'unknown' }], units: 5 })
+  assert.equal(result.totalCost, 35)
+  assert.equal(result.costPerUnit, 7)
 })
