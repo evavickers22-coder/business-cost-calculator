@@ -14,6 +14,7 @@ const sectionInfo = {
 
 const STORAGE_KEY = 'business-cost-calculator-products-v2'
 const SCHEMA_VERSION = 3
+const FREE_PRODUCT_LIMIT = 3
 let nextRowId = 1
 let nextProductId = 1
 const newRow = () => ({ id: nextRowId++, name: '', cost: '', costMode: 'batch' })
@@ -145,11 +146,12 @@ function sectionMarkup(section, product) {
 function render() {
   const p = active()
   app.innerHTML = `<main>
-    <header class="hero"><div class="brand-mark">BC</div><div><p class="eyebrow">Simple pricing, smarter business</p><h1>Business Cost Calculator</h1><p>Save and compare multiple products in one place.</p></div></header>
+    <header class="hero"><div class="brand-mark">BC</div><div><p class="eyebrow">Simple pricing, smarter business</p><h1>Business Cost Calculator <span class="free-title-badge">FREE</span></h1><p>Save and compare up to 3 products in one place.</p></div></header>
 
     <section class="product-manager card">
-      <div class="manager-head"><div><p class="manager-kicker">MY PRODUCTS</p><h2>Products</h2></div><button id="add-product" class="primary-action" type="button">＋ Add New Product</button></div>
+      <div class="manager-head"><div><p class="manager-kicker">MY PRODUCTS · FREE ${Math.min(products.length, FREE_PRODUCT_LIMIT)}/${FREE_PRODUCT_LIMIT}</p><h2>Products</h2></div><button id="add-product" class="primary-action" type="button" ${products.length >= FREE_PRODUCT_LIMIT ? 'disabled' : ''}>＋ Add New Product</button></div>
       <div class="product-list">${products.map(productCard).join('')}</div>
+      ${products.length >= FREE_PRODUCT_LIMIT ? '<p class="plan-limit-note">Free includes up to 3 products. Pro with unlimited products is coming soon. · Versi Gratis mencakup maksimal 3 produk.</p>' : ''}
       <div class="data-toolbar"><button id="export-backup" type="button">Export Backup</button><button id="import-backup" type="button">Import Backup</button><button id="reset-data" class="danger-action" type="button">Reset All</button><input id="backup-file" type="file" accept="application/json,.json" hidden></div>
       <p class="autosave-note" id="save-status" role="status">Saved automatically only on this device.</p>
     </section>
@@ -159,7 +161,7 @@ function render() {
       <label>Currency<select id="currency">${Object.entries(currencies).map(([code, c]) => `<option value="${code}" ${p.currency === code ? 'selected' : ''}>${code} — ${c.symbol}</option>`).join('')}</select></label>
     </div>
 
-    <div class="product-actions"><button id="duplicate-product" type="button">Duplicate Product</button><button id="delete-product" class="danger-action" type="button" ${products.length === 1 ? 'disabled' : ''}>Delete Product</button></div>
+    <div class="product-actions"><button id="duplicate-product" type="button" ${products.length >= FREE_PRODUCT_LIMIT ? 'disabled' : ''}>Duplicate Product</button><button id="delete-product" class="danger-action" type="button" ${products.length === 1 ? 'disabled' : ''}>Delete Product</button></div>
     <div class="flow"><span>Enter costs</span><b>→</b><span>Cost per unit</span><b>→</b><span>Choose price</span><b>→</b><span>See profit</span></div>
     <div id="cost-sections">${Object.keys(sectionInfo).map(k => sectionMarkup(k, p)).join('')}</div>
 
@@ -168,6 +170,14 @@ function render() {
     <section class="card"><div class="section-heading"><span class="step">5</span><div><h2>Selling Price</h2><p>Suggestions use markup on cost. Profit margin is shown separately below.</p></div></div><div class="suggestions" id="suggestions"></div><label class="custom-price">Custom Selling Price<div class="money-input large"><span data-symbol></span><input id="selling-price" type="number" inputmode="decimal" min="0" placeholder="0" aria-describedby="price-warning" value="${esc(p.sellingPrice)}"></div><small id="price-warning" class="field-warning" role="status"></small></label></section>
 
     <section class="results"><div class="results-title"><span class="step light">6</span><div><p>Your profit summary</p><h2><span id="result-product">${esc(p.name || 'Business')}</span> at a glance</h2></div></div><div class="result-grid"><div><span>Total Cost</span><strong data-value="totalCost"></strong></div><div><span>Number of Units</span><strong data-value="units"></strong></div><div><span>Cost Per Unit</span><strong data-value="costPerUnit"></strong></div><div><span>Selling Price</span><strong data-value="sellingPrice"></strong></div><div class="highlight"><span>Profit Per Unit</span><strong data-value="profitPerUnit"></strong></div><div class="highlight"><span>Profit Margin</span><strong data-value="profitMargin"></strong></div></div><div class="potential"><div><span>Total Potential Revenue</span><strong data-value="totalRevenue"></strong></div><div><span>Total Potential Profit</span><strong data-value="totalProfit"></strong></div></div><p class="results-note">Based on selling all <span id="note-units">1</span> units.</p></section>
+    <section class="upgrade-card" aria-labelledby="upgrade-title">
+      <div class="upgrade-intro"><span class="coming-badge">PRO · COMING SOON</span><h2 id="upgrade-title">Grow with better pricing insights</h2><p>Mulai gratis sekarang. Upgrade ke Pro nanti saat bisnis Anda membutuhkan analisis yang lebih lengkap.</p></div>
+      <div class="plan-comparison">
+        <article><span class="plan-name">FREE</span><h3>Simple essentials</h3><ul><li>Up to 3 products</li><li>Material, packaging & other costs</li><li>Cost per unit & selling price</li><li>Basic profit summary</li><li>Local autosave & backup</li></ul><strong>Free now</strong></article>
+        <article class="pro-plan"><span class="plan-name">PRO</span><h3>Advanced business tools</h3><ul><li>Unlimited products</li><li>Labour, waste, fees & tax</li><li>Target margin pricing</li><li>Retail, wholesale & promotion</li><li>Portfolio dashboard & reports</li></ul><button type="button" disabled>Join Waitlist · Soon</button></article>
+      </div>
+      <p class="upgrade-note">Pro waitlist will open soon. · Daftar tunggu Pro akan segera dibuka.</p>
+    </section>
     <footer><p>Made to help small businesses price with confidence.</p><p>Your data stays in this browser and is not sent to a server.</p></footer>
   </main>`
   updateResults()
@@ -272,11 +282,19 @@ app.addEventListener('click', event => {
   if (productButton) { activeId = Number(productButton.dataset.productId); render(); return }
 
   if (event.target.closest('#add-product')) {
+    if (products.length >= FREE_PRODUCT_LIMIT) {
+      alert('Free includes up to 3 products. Business Cost Calculator Pro with unlimited products is coming soon.')
+      return
+    }
     const product = makeProduct(`Product ${products.length + 1}`)
     products.push(product); activeId = product.id; save(); render(); return
   }
 
   if (event.target.closest('#duplicate-product')) {
+    if (products.length >= FREE_PRODUCT_LIMIT) {
+      alert('Free includes up to 3 products. Business Cost Calculator Pro with unlimited products is coming soon.')
+      return
+    }
     const source = active(); const clone = JSON.parse(JSON.stringify(source))
     clone.id = nextProductId++; clone.name = `${source.name || 'Product'} Copy`
     ;['materials','packaging','other'].forEach(k => clone[k].forEach(r => { r.id = nextRowId++ }))
